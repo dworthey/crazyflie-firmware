@@ -13,7 +13,7 @@ CFLAGS += $(EXTRA_CFLAGS)
 
 ######### JTAG and environment configuration ##########
 OPENOCD           ?= openocd
-OPENOCD_INTERFACE ?= interface/ti-icdi2.cfg
+OPENOCD_INTERFACE ?= $(CRAZYFLIE_BASE)/config/ti-icdi.cfg
 OPENOCD_CMDS      ?=
 CROSS_COMPILE     ?= arm-none-eabi-
 PYTHON            ?= python
@@ -55,7 +55,7 @@ PORT = $(FREERTOS)/portable/GCC/ARM_CM4F
 LINKER_DIR = $(CRAZYFLIE_BASE)/tools/make/F405/linker
 ST_OBJ_DIR  = $(CRAZYFLIE_BASE)/tools/make/F405
 
-OPENOCD_TARGET    ?= /home/david/Documents/config/stm32f4x.cfg
+OPENOCD_TARGET    ?= $(CRAZYFLIE_BASE)/config/stm32f4x.cfg
 
 
 # St Lib
