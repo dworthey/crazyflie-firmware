@@ -13,7 +13,9 @@ CFLAGS += $(EXTRA_CFLAGS)
 
 ######### JTAG and environment configuration ##########
 OPENOCD           ?= openocd
-OPENOCD_INTERFACE ?= $(CRAZYFLIE_BASE)/config/ti-icdi.cfg
+#OPENOCD_INTERFACE ?= $(CRAZYFLIE_BASE)/config/ti-icdi.cfg
+OPENOCD_INTERFACE ?= interface/stlink-v2.cfg
+
 OPENOCD_CMDS      ?=
 CROSS_COMPILE     ?= arm-none-eabi-
 PYTHON            ?= python
@@ -262,7 +264,7 @@ CC = $(CROSS_COMPILE)gcc
 LD = $(CROSS_COMPILE)gcc
 SIZE = $(CROSS_COMPILE)size
 OBJCOPY = $(CROSS_COMPILE)objcopy
-GDB = $(CROSS_COMPILE)gdb
+GDB = gdb-multiarch
 
 INCLUDES += -I$(FREERTOS)/include -I$(PORT) -I$(CRAZYFLIE_BASE)/src
 INCLUDES += -I$(CRAZYFLIE_BASE)/src/config -I$(CRAZYFLIE_BASE)/src/hal/interface -I$(CRAZYFLIE_BASE)/src/modules/interface
