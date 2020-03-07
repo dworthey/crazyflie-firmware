@@ -4,7 +4,4 @@
 
 void appMain(){
 	while(1);
-
-
-
 }

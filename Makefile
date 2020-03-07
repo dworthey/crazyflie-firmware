@@ -124,6 +124,8 @@ endif
 # Crazyflie sources
 VPATH += $(CRAZYFLIE_BASE)/src/init $(CRAZYFLIE_BASE)/src/hal/src $(CRAZYFLIE_BASE)/src/modules/src $(CRAZYFLIE_BASE)/src/utils/src $(CRAZYFLIE_BASE)/src/drivers/bosch/src $(CRAZYFLIE_BASE)/src/drivers/src $(CRAZYFLIE_BASE)/src/platform
 
+# Add my app folder
+VPATH += $(CRAZYFLIE_BASE)/app
 
 ############### Source files configuration ################
 
@@ -207,6 +209,7 @@ PROJ_OBJ += lighthouse.o
 PROJ_OBJ += activeMarkerDeck.o
 PROJ_OBJ += aideck.o
 
+
 ifeq ($(LPS_TDOA_ENABLE), 1)
 CFLAGS += -DLPS_TDOA_ENABLE
 endif
@@ -255,6 +258,10 @@ endif
 
 # Libs
 PROJ_OBJ += libarm_math.a
+
+# My App
+PROJ_OBJ += MyApp.o 
+
 
 OBJ = $(FREERTOS_OBJ) $(PORT_OBJ) $(ST_OBJ) $(PROJ_OBJ) $(CRT0)
 
