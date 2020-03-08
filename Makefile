@@ -260,8 +260,9 @@ endif
 PROJ_OBJ += libarm_math.a
 
 # My App
-PROJ_OBJ += MyApp.o 
-
+ifeq ($(APP),1)
+	PROJ_OBJ += MyApp.o 
+endif
 
 OBJ = $(FREERTOS_OBJ) $(PORT_OBJ) $(ST_OBJ) $(PROJ_OBJ) $(CRT0)
 
