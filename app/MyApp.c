@@ -8,11 +8,14 @@
 #include "task.h"
 #include "debug.h"
 
-void appMain(){
-	
+void appMain()
+{
+	for(int i=0; i<1000000; i++);
+	motorsTest();
+	motorsTest();
 	while(1){
 	ledTest();
-	motorsTest();	
+	motorsTest();
 	for(int i=0;i<100000;i++);
 	}
 
