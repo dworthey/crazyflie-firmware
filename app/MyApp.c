@@ -10,7 +10,9 @@
 
 void appMain()
 {
-	for(int i=0; i<1000000; i++);
+	motorsInit(&motorMapDefaultBrushed[NBR_OF_MOTORS]);
+	vTaskDelay(M2T(MOTORS_TEST_ON_TIME_MS));
+
 	motorsTest();
 	motorsTest();
 	while(1){
