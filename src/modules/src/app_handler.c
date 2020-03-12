@@ -34,8 +34,10 @@
 
 #include "app.h"
 
+#include "motors.h"
+
 #ifndef APP_STACKSIZE
-#define APP_STACKSIZE 300
+#define APP_STACKSIZE 500
 #endif
 
 #ifndef APP_PRIORITY
@@ -47,6 +49,8 @@ static bool isInit = false;
 STATIC_MEM_TASK_ALLOC(appTask, APP_STACKSIZE);
 
 static void appTask(void *param);
+
+//void appMain();
 
 void __attribute__((weak)) appInit()
 {

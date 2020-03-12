@@ -2,7 +2,9 @@
 # Copyright (c) 2011,2012 Bitcraze AB
 # This Makefile compiles all the objet file to ./bin/ and the resulting firmware
 # image in ./cfX.elf and ./cfX.bin
-
+DEBUG = 0
+APP = 1
+CLOAD = 1
 CRAZYFLIE_BASE ?= ./
 
 # Put your personal build config in tools/make/config.mk and DO NOT COMMIT IT!

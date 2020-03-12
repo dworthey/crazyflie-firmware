@@ -1,3 +1,5 @@
+
+
 // My App for Crazyflie 2.1
 //
 //
@@ -10,6 +12,11 @@
 
 void appMain()
 {
+	vTaskDelay(M2T(3000));
+	ledInit();
+	vTaskDelay(M2T(3000));
+	motorsInit(&motorMapDefaultBrushed[NBR_OF_MOTORS]);
+	vTaskDelay(M2T(MOTORS_TEST_ON_TIME_MS));//FUNCTION OF FREERTOS
 	for(int i=0; i<1000000; i++);
 	motorsTest();
 	motorsTest();
@@ -22,3 +29,6 @@ void appMain()
 
 	while(1);
 }
+
+
+
