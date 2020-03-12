@@ -1,5 +1,3 @@
-
-
 // My App for Crazyflie 2.1
 //
 //
@@ -18,7 +16,9 @@ void appMain()
 	motorsInit(&motorMapDefaultBrushed[NBR_OF_MOTORS]);
 	vTaskDelay(M2T(MOTORS_TEST_ON_TIME_MS));
 	motorsTest();
+	vTaskDelay(M2T(MOTORS_TEST_ON_TIME_MS));
 	motorsTest();
+	vTaskDelay(M2T(MOTORS_TEST_ON_TIME_MS));
 	while(1){
 	ledTest();
 	motorsTest();

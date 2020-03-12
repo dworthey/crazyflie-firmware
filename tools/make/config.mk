@@ -1,0 +1,3 @@
+CLOAD = 0
+DEBUG = 1
+APP = 1
