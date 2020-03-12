@@ -1,5 +1,7 @@
 build_info.json
 
+debug
+
 ^bin/dep/all
 bin/*
 .cproject
