@@ -451,3 +451,18 @@ include $(CRAZYFLIE_BASE)/tools/make/targets.mk
 unit:
 # The flag "-DUNITY_INCLUDE_DOUBLE" allows comparison of double values in Unity. See: https://stackoverflow.com/a/37790196
 	rake unit "DEFINES=$(CFLAGS) -DUNITY_INCLUDE_DOUBLE" "FILES=$(FILES)" "UNIT_TEST_STYLE=$(UNIT_TEST_STYLE)"
+
+everything:
+#close existing openocd
+	pkill openocd
+#compile everything
+	$(MAKE) all
+#load firmware onto board
+	$(MAKE) flash	
+#save symbols to txt file
+	readelf -a cf2.elf > Symbols.txt
+#open openocd in seperate terminal in background	
+	xterm -e make openocd &
+#open gdb in this terminal and make connection
+	$(MAKE) gdb
+	
