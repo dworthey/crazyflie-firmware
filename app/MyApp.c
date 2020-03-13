@@ -27,6 +27,10 @@ void appMain()
 void blinkLeds()
 {
 	while(flag){
+	//can escape infinite loop by
+		//changing flag to 0
+		//return using gdb
+
 		DEBUG_PRINT("Blink LEDs\n");
 		ledTest();
 		vTaskDelay(M2T(1000)); //delay 1000ms	
