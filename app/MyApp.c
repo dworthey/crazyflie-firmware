@@ -10,7 +10,7 @@
 
 void appMain()
 {
-	volatile int flaggy = 0;
+	volatile int flaggy = 1;
 	vTaskDelay(M2T(3000));
 	ledInit();
 	vTaskDelay(M2T(3000));
@@ -19,7 +19,7 @@ void appMain()
 	while(1){
 		ledTest();
 		vTaskDelay(M2T(3000));	
-		flaggy = (flaggy^7)<<2;
+		//while(flaggy != 0) flaggy *= 2;
 	}
 
 
