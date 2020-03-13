@@ -9,7 +9,7 @@
 #include "motors.h"
 
 volatile int flag = 1;
-
+void blinkLeds();
 void appMain()
 {
 	vTaskDelay(M2T(3000)); //delay 3000ms
