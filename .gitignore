@@ -1,6 +1,8 @@
 build_info.json
 
 debug
+Symbols.txt
+
 
 ^bin/dep/all
 bin/*
