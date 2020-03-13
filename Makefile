@@ -433,7 +433,7 @@ trace:
 gdb: $(PROG).elf
 	$(GDB) -ex "target remote localhost:3333" -ex "monitor reset halt" $^
 gdb_nohalt: $(PROG).elf
-	$(GDB) -ex "target remote localhost:3333" $^
+	$(GDB) -ex "target remote localhost:3333" -ex "monitor reset" $^
 	
 erase:
 	$(OPENOCD) -d2 -f $(OPENOCD_INTERFACE) -f $(OPENOCD_TARGET) -c init -c targets -c "halt" -c "stm32f4x mass_erase 0" -c shutdown
@@ -463,8 +463,8 @@ everything:
 	$(MAKE) flash	
 #save symbols to txt file
 	readelf -a cf2.elf > Symbols.txt
-#open openocd in seperate terminal in background	
-	xterm -e make openocd &
-#open gdb in this terminal and make connection
-	$(MAKE) gdb_nohalt
+#open openocd and make connection. & executes in background	
+	$(MAKE) openocd &
+#open gdb in a new terminal and make connection
+	xterm -e make gdb
 	
