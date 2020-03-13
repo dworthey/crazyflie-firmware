@@ -432,7 +432,9 @@ trace:
 
 gdb: $(PROG).elf
 	$(GDB) -ex "target remote localhost:3333" -ex "monitor reset halt" $^
-
+gdb_nohalt: $(PROG).elf
+	$(GDB) -ex "target remote localhost:3333" $^
+	
 erase:
 	$(OPENOCD) -d2 -f $(OPENOCD_INTERFACE) -f $(OPENOCD_TARGET) -c init -c targets -c "halt" -c "stm32f4x mass_erase 0" -c shutdown
 
@@ -453,8 +455,8 @@ unit:
 	rake unit "DEFINES=$(CFLAGS) -DUNITY_INCLUDE_DOUBLE" "FILES=$(FILES)" "UNIT_TEST_STYLE=$(UNIT_TEST_STYLE)"
 
 everything:
-#close existing openocd
-	pkill openocd
+#close existing openocd. ignore error if openocd isn't running
+	-pkill openocd
 #compile everything
 	$(MAKE) all
 #load firmware onto board
@@ -464,5 +466,5 @@ everything:
 #open openocd in seperate terminal in background	
 	xterm -e make openocd &
 #open gdb in this terminal and make connection
-	$(MAKE) gdb
+	$(MAKE) gdb_nohalt
 	
