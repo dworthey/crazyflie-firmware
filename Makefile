@@ -432,8 +432,6 @@ trace:
 
 gdb: $(PROG).elf
 	$(GDB) -ex "target remote localhost:3333" -ex "monitor reset halt" $^
-gdb_nohalt: $(PROG).elf
-	$(GDB) -ex "target remote localhost:3333" -ex "monitor reset" $^
 	
 erase:
 	$(OPENOCD) -d2 -f $(OPENOCD_INTERFACE) -f $(OPENOCD_TARGET) -c init -c targets -c "halt" -c "stm32f4x mass_erase 0" -c shutdown
@@ -454,6 +452,9 @@ unit:
 # The flag "-DUNITY_INCLUDE_DOUBLE" allows comparison of double values in Unity. See: https://stackoverflow.com/a/37790196
 	rake unit "DEFINES=$(CFLAGS) -DUNITY_INCLUDE_DOUBLE" "FILES=$(FILES)" "UNIT_TEST_STYLE=$(UNIT_TEST_STYLE)"
 
+gdb_from_file: $(PROG).elf
+	$(GDB) -ex "target remote localhost:3333" -ex "source app/gdbcommands.gdb" $^
+
 everything:
 #close existing openocd. ignore error if openocd isn't running
 	-pkill openocd
@@ -466,5 +467,5 @@ everything:
 #open openocd and make connection. & executes in background	
 	$(MAKE) openocd &
 #open gdb in a new terminal and make connection
-	xterm -e make gdb
+	xterm -e make gdb_from_file
 	
