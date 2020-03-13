@@ -8,22 +8,29 @@
 #include "debug.h"
 #include "motors.h"
 
+volatile int flag = 1;
+
 void appMain()
 {
-	volatile int flaggy = 1;
-	vTaskDelay(M2T(3000));
+	vTaskDelay(M2T(3000)); //delay 3000ms
 	ledInit();
-	vTaskDelay(M2T(3000));
+	vTaskDelay(M2T(3000)); //delay 3000ms
 	motorsInit(&motorMapDefaultBrushed[NBR_OF_MOTORS]);
 	vTaskDelay(M2T(MOTORS_TEST_ON_TIME_MS));
-	while(1){
+
+
+	blinkLeds(); //Infinite Loop
+
+
+	while(1) continue; //never return from appMain
+}
+void blinkLeds()
+{
+	while(flag){
+		DEBUG_PRINT("Blink LEDs\n");
 		ledTest();
-		vTaskDelay(M2T(3000));	
-		//while(flaggy != 0) flaggy *= 2;
+		vTaskDelay(M2T(1000)); //delay 1000ms	
 	}
-
-
-	while(1);
 }
 
 
