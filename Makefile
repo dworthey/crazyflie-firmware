@@ -468,4 +468,9 @@ everything:
 	$(MAKE) openocd &
 #open gdb in a new terminal and make connection
 	xterm -e make gdb_from_file
-	
+#	xterm -e make gdb
+#	konsole --hold -e make gdb
+
+installgdb:
+	sudo apt-get update
+	sudo apt-get install gdb-multiarch -y
