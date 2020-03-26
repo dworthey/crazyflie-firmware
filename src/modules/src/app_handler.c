@@ -42,7 +42,7 @@
 #include "app.h"
 
 #ifndef APP_STACKSIZE
-#define APP_STACKSIZE 400
+#define APP_STACKSIZE 300
 #endif
 
 #ifndef APP_PRIORITY
@@ -60,72 +60,84 @@ void appMain(){
 	unsigned long delay = 1*1000;//one second in milliseconds
 	unsigned long thrust = 65536;//maximum thrust capable of the motors
 	
-	logInit();//gain access to log info
 
+
+	logInit();//gain access to log info
 	vTaskDelay(delay);
+
+
 
 	stateEstimatorInit(getStateEstimator());//struct necessary for initializing the gyro sensors
-
 	vTaskDelay(delay);
+
+
 
 	stabilizerInit(getStateEstimator());
-
 	vTaskDelay(delay);
 
-	motorsInit(&motorMapDefaultBrushed[NBR_OF_MOTORS]);
+
+
+	motorsInit(&motorMapDefaultBrushed[NBR_OF_MOTORS]);//Enables motor functions
 	vTaskDelay(M2T(MOTORS_TEST_ON_TIME_MS));//FUNCTION OF FREERTOS
 
-	deckInit();//Enables use of Decks
-	
-	struct deckInfo_s* z = (struct deckInfo_s *)deckInfo(0);//zranger deck struct
 
-	zRanger2Init(z);//initializes the zranger
+//	deckInit();//Enables use of Decks
+//	struct deckInfo_s* z = (struct deckInfo_s *)deckInfo(0);//zranger deck struct
+//	zRanger2Init(z);//initializes the zranger
 
-	int zRang = logGetVarId("range", "zrange");//measures the height of the crazyflie
+
+
+//	int zRang = logGetVarId("range", "zrange");//measures the height of the crazyflie
 	int roll = logGetVarId("stabilizer","roll");//measures roll of the crazyflie
 	int pitch = logGetVarId("stabilizer", "pitch");//measures pitch of the crazyflie
+
+
+
+
+
+
 
 	unsigned long thrust1, thrust2, thrust3, thrust4 = 0;//the thrust each motor will output
 
 
-	while (1) {//testing the sensors
+	while (1) {
 
 		thrust1 = 0;
 		thrust2 = 0;
 		thrust3 = 0;
 		thrust4 = 0;
 
-		if (logGetUint(zRang) < 500) {
-			thrust1 = .5*thrust;
-			thrust2 = .5*thrust;
-			thrust3 = .5*thrust;
-			thrust4 = .5*thrust;
-		}
-		if (logGetFloat(roll) > 15 && logGetFloat(roll) < 160) {//if the drone is less than 300 mm off the ground the propellers spin
-			thrust1 += .3*thrust;
-			thrust2 += .3*thrust;
+//		if (logGetUint(zRang) < 500) {
+//			thrust1 = .5*thrust;
+//			thrust2 = .5*thrust;
+//			thrust3 = .5*thrust;
+//			thrust4 = .5*thrust;
+//		}
+		if (logGetFloat(roll) > 15 && logGetFloat(roll) < 160) {//if the drone has more than 15 of less than 160 degree roll readings the motors 1 and 2 run
+			thrust1 += .2*thrust;
+			thrust2 += .2*thrust;
 			thrust3 += 0;
 			thrust4 += 0;
 		}
-		if (logGetFloat(roll) < -15 && logGetFloat(roll) > -160) {//if the drone is less than 300 mm off the ground the propellers spin
+		if (logGetFloat(roll) < -15 && logGetFloat(roll) > -160) {//if the drone has more than 15 of less than 160 degree roll readings the motors 3 and 4 run
 			thrust1 += 0;
 			thrust2 += 0;
-			thrust3 += .3*thrust;
-			thrust4 += .3*thrust;
+			thrust3 += .2*thrust;
+			thrust4 += .2*thrust;
 		}
 		if (logGetFloat(pitch) < -15 && logGetFloat(pitch) > -160){
-			thrust1 += .3*thrust;
+			thrust1 += .2*thrust;
 			thrust2 += 0;
 			thrust3 += 0;
-			thrust4 += .3*thrust;
+			thrust4 += .2*thrust;
 		}
 		if (logGetFloat(pitch) > 15 && logGetFloat(pitch) < 160){
 			thrust1 += 0;
-			thrust2 += .3*thrust;
-			thrust3 += .3*thrust;
+			thrust2 += .2*thrust;
+			thrust3 += .2*thrust;
 			thrust4 += 0;
 		}
-		if (logGetFloat(roll) <= -160 || logGetFloat(roll) >= 160){
+		if (logGetFloat(roll) <= -160 || logGetFloat(roll) >= 160){//if the drone gets turned
 			thrust1 = 0*thrust;
 			thrust2 = 0*thrust;
 			thrust3 = 0*thrust;
@@ -138,12 +150,20 @@ void appMain(){
 		motorsSetRatio(3, thrust4);
 	}
 
-	vTaskDelay(M2T(1*delay));//runs engines for delay milliseconds seconds
+	vTaskDelay(M2T(2*delay));//runs engines for delay milliseconds seconds
 	motorsSetRatio(0, 0);
 	motorsSetRatio(1, 0);
 	motorsSetRatio(2, 0);
 	motorsSetRatio(3, 0);
 	
+}
+
+double smoothThrust(double deg){
+	double thrust = 65536;//maximum thrust capable of the motors
+	if(deg < 0){
+		deg = -1*deg;
+	}
+	return (double).3*thrust*deg/180;
 }
 
 void __attribute__((weak)) appInit()
