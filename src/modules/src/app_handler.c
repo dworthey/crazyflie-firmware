@@ -27,9 +27,15 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "commander.h"
 #include "motors.h"
+#include "controller_mellinger.h"
 #include "zranger2.h"
+#include "pid.h"
 #include "stabilizer.h"
+#include "sensors.h"
+#include "stabilizer_types.h"
+#include "imu_types.h"
 #include "deck.h"
 #include "deck_core.h"
 #include "log.h"
@@ -55,106 +61,105 @@ STATIC_MEM_TASK_ALLOC(appTask, APP_STACKSIZE);
 
 static void appTask(void *param);
 
+//void control_Init(control_t* con){
+//
+//	int roll0 = logGetVarId("stabilizer", "roll");
+//	int pitch0 = logGetVarId("stabilizer", "pitch");
+//	int yaw0 = logGetVarId("stabilizer", "yaw");
+//
+//	con->roll = logGetFloat(roll0);
+//	con->pitch = logGetFloat(pitch0);
+//	con->yaw = logGetFloat(yaw0);
+//}
+static void setpoint_Init(setpoint_t *setp, float vx, float vy,float z, float yaw ){
+
+	setp->mode.z = modeAbs;
+	setp->position.z = z;
+	setp->mode.yaw = modeVelocity;
+	setp->attitudeRate.yaw = yaw;
+	setp->mode.x = modeVelocity;
+	setp->mode.y = modeVelocity;
+	setp->velocity.x = vx;
+	setp->velocity.y = vy;
+}
+
+//attitude_t* attitude_init(void){
+//
+//	attitude_t att;
+//
+//	int roll0 = logGetVarId("stabilizer", "roll");
+//	int pitch0 = logGetVarId("stabilizer", "pitch");
+//	int yaw0 = logGetVarId("stabilizer", "yaw");
+//
+//	att.roll = logGetFloat(roll0);
+//	att.pitch = logGetFloat(pitch0);
+//	att.yaw = logGetFloat(yaw0);
+//
+//	return &att;
+//
+//}
+//vec3_t* vec_Init(void){
+//	 vec3_t* vec;
+//
+//	 vec->x = 0;
+//	 vec->y = 0;
+//	 vec->z = 0;
+//
+//	 return vec;
+//}
+//
+//quaternion_t* quat_Init(void){
+//
+//	quaternion_t *quat;
+//
+//	quat->x = 0;
+//	quat->y = 0;
+//	quat->z = 0;
+//	quat->w = 0;
+//
+//	return quat;
+//}
+
 void appMain(){
 
-	unsigned long delay = 1*1000;//one second in milliseconds
-	unsigned long thrust = 65536;//maximum thrust capable of the motors
 	
+	static setpoint_t setp;
+	vTaskDelay(M2T(3000));
 
 
-	logInit();//gain access to log info
-	vTaskDelay(delay);
+	uint16_t logUp = logGetVarId("range", "up");
+//	uint16_t logDown = logGetVarId("range", "down");
+//	uint16_t logBack = logGetVarId("range", "back");
+	uint16_t logFront = logGetVarId("range", "front");
+	uint16_t logRight = logGetVarId("range", "right");
+//	uint16_t logLeft = logGetVarId("range", "left");
 
 
-
-	stateEstimatorInit(getStateEstimator());//struct necessary for initializing the gyro sensors
-	vTaskDelay(delay);
-
-
-
-	stabilizerInit(getStateEstimator());
-	vTaskDelay(delay);
-
-
-
-	motorsInit(&motorMapDefaultBrushed[NBR_OF_MOTORS]);//Enables motor functions
-	vTaskDelay(M2T(MOTORS_TEST_ON_TIME_MS));//FUNCTION OF FREERTOS
-
-
-//	deckInit();//Enables use of Decks
-//	struct deckInfo_s* z = (struct deckInfo_s *)deckInfo(0);//zranger deck struct
-//	zRanger2Init(z);//initializes the zranger
-
-
-
-//	int zRang = logGetVarId("range", "zrange");//measures the height of the crazyflie
-	int roll = logGetVarId("stabilizer","roll");//measures roll of the crazyflie
-	int pitch = logGetVarId("stabilizer", "pitch");//measures pitch of the crazyflie
-
-
-
-
-
-
-
-	unsigned long thrust1, thrust2, thrust3, thrust4 = 0;//the thrust each motor will output
-
-
+	setpoint_Init(&setp, 0, 0, 0.3, 0);
+	commanderSetSetpoint(&setp, 3);
+	vTaskDelay(M2T(2000));
 	while (1) {
+		vTaskDelay(M2T(10));
+		setpoint_Init(&setp, 0.3, 0, 0.3, 0);
+			commanderSetSetpoint(&setp, 3);
 
-		thrust1 = 0;
-		thrust2 = 0;
-		thrust3 = 0;
-		thrust4 = 0;
+		if (logGetUint(logFront) < 600){
+			while(logGetUint(logRight) >= 600){
+				setpoint_Init(&setp, 0, 0, .3, 22.5);
+				commanderSetSetpoint(&setp, 3);
+			}
+			vTaskDelay(M2T(20));
+		}
+		if (logGetUint(logUp) < 300){
+			setpoint_Init(&setp, 0, 0, 0, 0);
+			commanderSetSetpoint(&setp, 3);
+			break;
+		}
 
-//		if (logGetUint(zRang) < 500) {
-//			thrust1 = .5*thrust;
-//			thrust2 = .5*thrust;
-//			thrust3 = .5*thrust;
-//			thrust4 = .5*thrust;
-//		}
-		if (logGetFloat(roll) > 15 && logGetFloat(roll) < 160) {//if the drone has more than 15 of less than 160 degree roll readings the motors 1 and 2 run
-			thrust1 += .2*thrust;
-			thrust2 += .2*thrust;
-			thrust3 += 0;
-			thrust4 += 0;
-		}
-		if (logGetFloat(roll) < -15 && logGetFloat(roll) > -160) {//if the drone has more than 15 of less than 160 degree roll readings the motors 3 and 4 run
-			thrust1 += 0;
-			thrust2 += 0;
-			thrust3 += .2*thrust;
-			thrust4 += .2*thrust;
-		}
-		if (logGetFloat(pitch) < -15 && logGetFloat(pitch) > -160){
-			thrust1 += .2*thrust;
-			thrust2 += 0;
-			thrust3 += 0;
-			thrust4 += .2*thrust;
-		}
-		if (logGetFloat(pitch) > 15 && logGetFloat(pitch) < 160){
-			thrust1 += 0;
-			thrust2 += .2*thrust;
-			thrust3 += .2*thrust;
-			thrust4 += 0;
-		}
-		if (logGetFloat(roll) <= -160 || logGetFloat(roll) >= 160){//if the drone gets turned
-			thrust1 = 0*thrust;
-			thrust2 = 0*thrust;
-			thrust3 = 0*thrust;
-			thrust4 = 0*thrust;
-			return;
-		}
-		motorsSetRatio(0, thrust1);
-		motorsSetRatio(1, thrust2);
-		motorsSetRatio(2, thrust3);
-		motorsSetRatio(3, thrust4);
+
 	}
+	while(1) continue;
 
-	vTaskDelay(M2T(2*delay));//runs engines for delay milliseconds seconds
-	motorsSetRatio(0, 0);
-	motorsSetRatio(1, 0);
-	motorsSetRatio(2, 0);
-	motorsSetRatio(3, 0);
 	
 }
 
