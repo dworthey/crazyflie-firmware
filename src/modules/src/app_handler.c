@@ -38,6 +38,7 @@
 #include "imu_types.h"
 #include "deck.h"
 #include "deck_core.h"
+#include "led.h"
 #include "log.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -48,7 +49,7 @@
 #include "app.h"
 
 #ifndef APP_STACKSIZE
-#define APP_STACKSIZE 300
+#define APP_STACKSIZE 400
 #endif
 
 #ifndef APP_PRIORITY
@@ -61,16 +62,33 @@ STATIC_MEM_TASK_ALLOC(appTask, APP_STACKSIZE);
 
 static void appTask(void *param);
 
-//void control_Init(control_t* con){
-//
-//	int roll0 = logGetVarId("stabilizer", "roll");
-//	int pitch0 = logGetVarId("stabilizer", "pitch");
-//	int yaw0 = logGetVarId("stabilizer", "yaw");
-//
-//	con->roll = logGetFloat(roll0);
-//	con->pitch = logGetFloat(pitch0);
-//	con->yaw = logGetFloat(yaw0);
-//}
+const uint16_t maxRange = 300;
+const float maxSpeed = 0.3f;
+const uint16_t maxRange2 = 600;
+const float height = 0.3f;
+
+typedef struct logger{
+	uint16_t logUp;
+	uint16_t logDown;
+	uint16_t logRight;
+	uint16_t logLeft;
+	uint16_t logFront;
+	uint16_t logBack;
+	uint16_t logYaw;
+}logger;
+
+bool TOOCLOSE(logger* x){
+
+	static bool rg;
+	rg=false;
+
+	if(logGetUint(x->logUp) < maxRange || logGetUint(x->logBack) < maxRange || logGetUint(x->logFront) < maxRange || logGetUint(x->logRight) < maxRange || logGetUint(x->logLeft) < maxRange){
+		rg = true;
+	}
+
+	return rg;
+}
+
 static void setpoint_Init(setpoint_t *setp, float vx, float vy,float z, float yaw ){
 
 	setp->mode.z = modeAbs;
@@ -82,94 +100,131 @@ static void setpoint_Init(setpoint_t *setp, float vx, float vy,float z, float ya
 	setp->velocity.x = vx;
 	setp->velocity.y = vy;
 }
+void moveAway(setpoint_t *set, logger* x){
 
-//attitude_t* attitude_init(void){
-//
-//	attitude_t att;
-//
-//	int roll0 = logGetVarId("stabilizer", "roll");
-//	int pitch0 = logGetVarId("stabilizer", "pitch");
-//	int yaw0 = logGetVarId("stabilizer", "yaw");
-//
-//	att.roll = logGetFloat(roll0);
-//	att.pitch = logGetFloat(pitch0);
-//	att.yaw = logGetFloat(yaw0);
-//
-//	return &att;
-//
-//}
-//vec3_t* vec_Init(void){
-//	 vec3_t* vec;
-//
-//	 vec->x = 0;
-//	 vec->y = 0;
-//	 vec->z = 0;
-//
-//	 return vec;
-//}
-//
-//quaternion_t* quat_Init(void){
-//
-//	quaternion_t *quat;
-//
-//	quat->x = 0;
-//	quat->y = 0;
-//	quat->z = 0;
-//	quat->w = 0;
-//
-//	return quat;
-//}
+	static float vx = 0;
+	static float vy = 0;
+	static uint8_t down= height;
+
+
+	if(logGetUint(x->logUp) < 1.1*maxRange){
+		setpoint_Init(set, 0, 0, 0, 0);
+		commanderSetSetpoint(set, 3);
+	}
+	else if(logGetUint(x->logRight) < 1.1*maxRange){
+		setpoint_Init(set, maxSpeed, 0, height, 0);
+		commanderSetSetpoint(set,3);
+	}
+	else if(logGetUint(x->logLeft) < 1.1*maxRange){
+		setpoint_Init(set, -1*maxSpeed, 0, height, 0);
+		commanderSetSetpoint(set,3);
+	}
+	else if(logGetUint(x->logBack) < 1.1*maxRange){
+		setpoint_Init(set, 0, maxSpeed, height, 0);
+		commanderSetSetpoint(set,3);
+	}
+	else if(logGetUint(x->logFront) < maxRange){
+		setpoint_Init(set, 0, -1*maxSpeed, height, 0);
+		commanderSetSetpoint(set,3);
+	}
+}
+void Spin(setpoint_t *set, logger* x){
+
+
+	while(logGetUint(x->logYaw) <= 179.9 && logGetUint(x->logUp) > maxRange){
+		setpoint_Init(set, 0, 0, height, 22.5);
+		commanderSetSetpoint(set, 3);
+	}
+	while(logGetUint(x->logYaw) != 0 && logGetUint(x->logUp) > maxRange){
+		setpoint_Init(set, 0, 0, height, -22.5);
+		commanderSetSetpoint(set, 3);
+	}
+}
+static void moveI(setpoint_t *set, logger* x){
+
+	Spin(set, x);
+	while(logGetUint(x->logFront) > maxRange2){
+		if(TOOCLOSE(x)){
+			moveAway(set, x);
+		}
+		else{
+			setpoint_Init(set, maxSpeed, 0, height, 0);
+			commanderSetSetpoint(set, 3);
+		}
+	}
+	while(logGetUint(x->logLeft) > maxRange2){
+		if(TOOCLOSE(x)){
+			moveAway(set, x);
+		}
+		else{
+			setpoint_Init(set, 0, maxSpeed,height, 0);
+			commanderSetSetpoint(set, 3);
+		}
+	}
+	Spin(set, x);
+	while(logGetUint(x->logBack) > maxRange2){
+		if(TOOCLOSE(x)){
+			moveAway(set, x);
+		}
+		else{
+			setpoint_Init(set, -1*maxSpeed, 0, 0.3, 0);
+			commanderSetSetpoint(set, 3);
+		}
+	}
+	Spin(set, x);
+	while(logGetUint(x->logRight) > maxRange2){
+		if(TOOCLOSE(x)){
+			moveAway(set, x);
+		}
+		else{
+			setpoint_Init(set, 0, -1*maxSpeed, 0.3, 0);
+			commanderSetSetpoint(set, 3);
+		}
+	}
+	Spin(set, x);
+	setpoint_Init(set, 0, 0, 0, 0);
+	commanderSetSetpoint(set, 3);
+}
 
 void appMain(){
 
-	
+	static logger logs;
+
+	logs.logUp = logGetVarId("range", "up");
+	logs.logBack = logGetVarId("range", "back");
+	logs.logFront = logGetVarId("range", "front");
+	logs.logRight = logGetVarId("range", "right");
+	logs.logLeft = logGetVarId("range", "left");
+	logs.logYaw = logGetVarId("stabilizer", "yaw");
+
+
 	static setpoint_t setp;
 	vTaskDelay(M2T(3000));
+	for(int i = 0; i < 100; i++){
+		setpoint_Init(&setp, 0, 0, 0.3, 0);
+		commanderSetSetpoint(&setp, 3);
+	}
+
+	vTaskDelay(M2T(5));
+	//while(1) continue;
+	moveI(&setp, &logs);
 
 
-	uint16_t logUp = logGetVarId("range", "up");
-//	uint16_t logDown = logGetVarId("range", "down");
-//	uint16_t logBack = logGetVarId("range", "back");
-	uint16_t logFront = logGetVarId("range", "front");
-	uint16_t logRight = logGetVarId("range", "right");
-//	uint16_t logLeft = logGetVarId("range", "left");
-
-
+	/*
 	setpoint_Init(&setp, 0, 0, 0.3, 0);
 	commanderSetSetpoint(&setp, 3);
 	vTaskDelay(M2T(2000));
-	while (1) {
-		vTaskDelay(M2T(10));
-		setpoint_Init(&setp, 0.3, 0, 0.3, 0);
-			commanderSetSetpoint(&setp, 3);
+	moveI(&setp);
 
-		if (logGetUint(logFront) < 600){
-			while(logGetUint(logRight) >= 600){
-				setpoint_Init(&setp, 0, 0, .3, 22.5);
-				commanderSetSetpoint(&setp, 3);
-			}
-			vTaskDelay(M2T(20));
-		}
-		if (logGetUint(logUp) < 300){
-			setpoint_Init(&setp, 0, 0, 0, 0);
-			commanderSetSetpoint(&setp, 3);
-			break;
-		}
+	setpoint_Init(&setp, 0, 0, 0, 0);
+	commanderSetSetpoint(&setp, 3);
+	*/
 
-
-	}
 	while(1) continue;
 
 	
 }
 
-double smoothThrust(double deg){
-	double thrust = 65536;//maximum thrust capable of the motors
-	if(deg < 0){
-		deg = -1*deg;
-	}
-	return (double).3*thrust*deg/180;
-}
 
 void __attribute__((weak)) appInit()
 {
